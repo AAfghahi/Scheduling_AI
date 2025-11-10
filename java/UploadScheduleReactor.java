@@ -1,6 +1,7 @@
 package prerna;
 
 import prerna.reactor.AbstractReactor;
+import prerna.sablecc2.om.PixelDataType;
 import prerna.sablecc2.om.ReactorKeysEnum;
 import prerna.sablecc2.om.nounmeta.NounMetadata;
 import prerna.util.Constants;
@@ -10,10 +11,13 @@ import java.io.FileInputStream;
 import java.util.UUID;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -42,89 +46,78 @@ public class UploadScheduleReactor extends AbstractReactor {
   @Override
   public NounMetadata execute() {
 
-    /*
-     * PARAMS:
-     * excel file path
-     * 
-     * RETURN:
-     * object [ 'yy-yy-yyyy', 'yy-yy-yyyy' ... ] // dates for each month
-     * 
-     */
-
     organizeKeys();
-    String filePath;
-    List<LocalDate> resultMap = new ArrayList<>();
-    boolean vacation = false;
-    try {
+    String filePath = (String) this.keyValue.get("FILE_PATH");
+    List<String> result = new ArrayList<>();
+    LocalDate firstDay = null;
+    LocalDate lastDay = null;
 
-      filePath = this.keyValue.get(ReactorKeysEnum.FILE_PATH.getKey().toString());
-      File file = new File(this.insight.getAbsoluteInsightFolderPath(filePath)); // get file from insight cache
+    try {
+      String absolutePath = this.insight.getAbsoluteInsightFolderPath(filePath);
+      File file = new File(absolutePath);
       FileInputStream fis = new FileInputStream(file);
       Workbook workbook = new XSSFWorkbook(fis);
 
-      for (int i = 0; i < workbook.getNumberOfSheets(); i++) { // loop through sheets to process all months
+      for (int i = 1; i < workbook.getNumberOfSheets(); i++) {
         Sheet sheet = workbook.getSheetAt(i);
-        System.out.println("Processing sheet: " + sheet.getSheetName());
-
-        Row headerMonth = sheet.getRow(1); // get month and year from 2nd row
-        String calendarDate = headerMonth.getCell(1).getStringCellValue().trim(); // "January 2026"
-        // separate month and year?
-        String[] parts = calendarDate.split(" ");
-        String month = parts[0];
-        String year = parts[1];
-        System.out.println("Month: " + month + ", Year: " + year);
-
-        System.out.println("sheet name: " + sheet.getSheetName());
 
         Iterator<Row> rowIterator = sheet.iterator();
         while (rowIterator.hasNext()) {
           Row row = rowIterator.next();
           int currentRowIndex = row.getRowNum();
-          if (currentRowIndex < 4) { // skip first 4 rows (headers)
+
+          if (currentRowIndex < 4) { // skip header rows
             continue;
           }
+
           Iterator<Cell> cellIterator = row.cellIterator();
           while (cellIterator.hasNext()) {
             Cell dateCell = cellIterator.next();
-            if (dateCell.getCellType() != CellType.BLANK) {
-              System.out.print(
-                  "date cell value: " + dateCell.getStringCellValue().trim() + " cell column #: "
-                      + dateCell.getColumnIndex());
-              int cellIndex = dateCell.getColumnIndex(); // current index (column, row)
-              Row nextRow = sheet.getRow(currentRowIndex + 1); // row + 1
-              Cell nextRowCell = nextRow.getCell(cellIndex); // (column, row + 1)
-              if ((nextRowCell.getCellType() != CellType.BLANK)
-                  && (holidayKeys.containsKey(nextRowCell.getStringCellValue().trim()))) {
+            if (dateCell != null && dateCell.getCellType() != CellType.BLANK) {
+              int cellIndex = dateCell.getColumnIndex();
+              Row nextRow = sheet.getRow(currentRowIndex + 1);
+              if (nextRow != null) {
+                Cell nextRowCell = nextRow.getCell(cellIndex);
 
-                // if (nextRowCell.getStringCellValue().trim().equals("L")) {
-                // vacation = true;
-                // } else if (nextRowCell.getStringCellValue().trim().equals("F")) {
-                // vacation = false;
-                // }
+                if (nextRowCell != null &&
+                    nextRowCell.getCellType() == CellType.STRING &&
+                    holidayKeys.containsKey(nextRowCell.getStringCellValue().trim())) {
+                  result.add(dateCell.getDateCellValue().toInstant()
+                      .atZone(java.time.ZoneId.systemDefault())
+                      .toLocalDate().toString());
 
-                System.out
-                    .println("holiday date and type: " + holidayKeys.get(dateCell.getStringCellValue().trim()) + ", "
-                        + nextRowCell.getStringCellValue().trim());
+                  if (nextRowCell.getStringCellValue().trim().equals("L")) {
+                    lastDay = dateCell.getDateCellValue().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+                  } else if (nextRowCell.getStringCellValue().trim().equals("F")) {
+                    firstDay = dateCell.getDateCellValue().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+                  }
 
-                // String dateString = dateCell.getStringCellValue().trim() + " " + month + " "
-                // + year;
-                // DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy");
-                // LocalDate date = LocalDate.parse(dateString, formatter);
-                // resultMap.add(date);
+                  // get days between last and first day
+                  // if (firstDay != null && lastDay != null) {
 
+                  // }
+                }
               }
-
             }
-
           }
         }
-        workbook.close();
+      }
+
+      workbook.close();
+      fis.close();
+      System.out.println("result dates:");
+      for (LocalDate date : result) {
+        System.out.println("  " + date);
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    return null;
+    return new NounMetadata(result, PixelDataType.CUSTOM_DATA_STRUCTURE);
 
   }
 }

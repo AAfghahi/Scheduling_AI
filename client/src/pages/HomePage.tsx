@@ -1,79 +1,96 @@
-import { Stack, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import { Button, Stack, Typography } from "@mui/material";
+import { useRef, useState } from "react";
 import { useLoadingPixel } from "@/hooks";
+import { useInsight } from "@semoss/sdk-react";
 
-/**
- * Renders the home page.
- *
- * @component
- */
+
 export const HomePage = () => {
-	/**
-	 * State
-	 */
-	const [textValue, setTextValue] = useState<string>("");
 
-	/**
-	 * Library hooks
-	 */
+	const hiddenFileInput = useRef(null);
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const { actions, system } = useInsight();
+	const [daysOff, setDaysOff] = useState([]);
+	//const { notification } = useNotification();
 	const [helloUserResponse, isLoadingHelloUser] =
 		useLoadingPixel<string>("HelloUser()");
-	const [callPythonResponse, isLoadingCallPython] = useLoadingPixel<string>(
-		`CallPython(${Number(textValue)})`,
-		"",
-		!Number(textValue) && textValue !== "0",
-	);
+
+	const uploadFiles = async (file): Promise<string> => {
+		const fileLocations: string[] = [];
+		try {
+			const response = await actions.upload(file, '');
+			const fileLocation = `'${response[0].fileLocation.replace(/^\//, '',)}'`;
+			fileLocations.push(fileLocation);
+			return fileLocations.join(',');
+
+		} catch (e) {
+			console.error("File upload failed:", e);
+		}
+
+	};
+
+
+	const handleClick = () => {
+		hiddenFileInput.current.click();
+	};
+
+	const handleUpload = async () => {
+		const query = `UploadSchedule(FILE_PATH=${await uploadFiles(selectedFile)})`;
+		await actions.run(query).then((response) => {
+			const { output, operationType } = response.pixelReturn[0];
+
+			if (operationType[0] !== 'ERROR') {
+				setDaysOff(output as any);
+			}
+
+		})
+	};
 
 	return (
 		<Stack spacing={2}>
-			<Typography variant="h4">Home page</Typography>
-			<Typography>
-				Welcome to the SEMOSS Template application! This repository is
-				meant to be a starting point for your own SEMOSS application.
+			<Typography variant="h4">Schedule Uploader</Typography>
+			<Typography fontStyle="italic">
+				{isLoadingHelloUser
+					? "Loading..."
+					: helloUserResponse}
 			</Typography>
-			<Typography variant="h6">Example pixel calls:</Typography>
-			<ul>
-				<li>
-					<Typography variant="body1" fontWeight="bold">
-						HelloUser()
-					</Typography>
-					<ul>
-						<li>
-							<Typography fontStyle="italic">
-								{isLoadingHelloUser
-									? "Loading..."
-									: helloUserResponse}
-							</Typography>
-						</li>
-					</ul>
-				</li>
-				<li>
-					<Stack direction="row" spacing={1} alignItems="center">
-						<Typography variant="body1" fontWeight="bold">
-							{"CallPython( numValue ="}
-						</Typography>
-						<TextField
-							value={textValue}
-							onChange={(e) =>
-								setTextValue(e.target.value?.replace(/\D/g, ""))
-							}
-							size="small"
-						/>
-						<Typography variant="body1" fontWeight="bold">
-							{")"}
-						</Typography>
+			<br />
+			<Stack alignItems={'flex-start'}>
+				<input
+					type="file"
+					ref={hiddenFileInput}
+					onChange={(e) => setSelectedFile(e.target.files[0])}
+					style={{ display: 'none' }}
+				/>
+				<Button
+					variant="contained"
+					onClick={handleClick}
+				>
+					Upload Schedule
+				</Button>
+				{selectedFile && (<Typography variant="body1" mt={1}>
+					Selected File: {selectedFile.name}
+				</Typography>
+				)}
+				{selectedFile && (
+					<Button
+						variant="outlined"
+						onClick={() => handleUpload()}
+						sx={{ mt: 2 }}
+					>
+						Submit File
+					</Button>
+				)}
+				{daysOff.length > 0 && (
+					<Stack mt={2} spacing={1}>
+						<Typography variant="h6">Days Off:</Typography>
+						{daysOff.map((day, index) => (
+							<p key={index}>
+								{day}
+							</p>
+						))}
 					</Stack>
-					<ul>
-						<li>
-							<Typography fontStyle="italic">
-								{isLoadingCallPython
-									? "Loading..."
-									: callPythonResponse}
-							</Typography>
-						</li>
-					</ul>
-				</li>
-			</ul>
+				)}
+			</Stack>
 		</Stack>
 	);
 };
