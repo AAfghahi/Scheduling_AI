@@ -1,30 +1,23 @@
-package prerna;
+package reactors;
 
 import prerna.reactor.AbstractReactor;
 import prerna.sablecc2.om.PixelDataType;
-import prerna.sablecc2.om.ReactorKeysEnum;
 import prerna.sablecc2.om.nounmeta.NounMetadata;
-import prerna.util.Constants;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.UUID;
-
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class UploadScheduleReactor extends AbstractReactor {
@@ -109,10 +102,10 @@ public class UploadScheduleReactor extends AbstractReactor {
 
       workbook.close();
       fis.close();
-      System.out.println("result dates:");
-      for (LocalDate date : result) {
-        System.out.println("  " + date);
-      }
+      // System.out.println("result dates:");
+      // for (LocalDate date : result) {
+      //   System.out.println("  " + date);
+      // }
     } catch (Exception e) {
       e.printStackTrace();
     }
