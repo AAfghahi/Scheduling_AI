@@ -14,7 +14,7 @@ export const InitializedLayout = () => {
 	return (
 		<Stack height="100vh">
 			{/* Allow users to navigate around the app */}
-			<MainNavigation />
+			{/* <MainNavigation /> */}
 
 			{isInitialized ? (
 				// If initialized, set up padding and scroll

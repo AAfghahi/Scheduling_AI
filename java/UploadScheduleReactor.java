@@ -51,6 +51,7 @@ public class UploadScheduleReactor extends AbstractReactor {
     List<String> result = new ArrayList<>();
     LocalDate firstDay = null;
     LocalDate lastDay = null;
+    List<String> summerVacation = new ArrayList<>();
 
     try {
       String absolutePath = this.insight.getAbsoluteInsightFolderPath(filePath);
@@ -82,24 +83,22 @@ public class UploadScheduleReactor extends AbstractReactor {
                 if (nextRowCell != null &&
                     nextRowCell.getCellType() == CellType.STRING &&
                     holidayKeys.containsKey(nextRowCell.getStringCellValue().trim())) {
-                  result.add(dateCell.getDateCellValue().toInstant()
-                      .atZone(java.time.ZoneId.systemDefault())
-                      .toLocalDate().toString());
 
                   if (nextRowCell.getStringCellValue().trim().equals("L")) {
                     lastDay = dateCell.getDateCellValue().toInstant()
                         .atZone(java.time.ZoneId.systemDefault())
                         .toLocalDate();
+                    result.add("Last Day of School: " + lastDay.toString());
                   } else if (nextRowCell.getStringCellValue().trim().equals("F")) {
                     firstDay = dateCell.getDateCellValue().toInstant()
                         .atZone(java.time.ZoneId.systemDefault())
                         .toLocalDate();
+                    result.add("First Day of School: " + firstDay.toString());
+                  } else {
+                    result.add(dateCell.getDateCellValue().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate().toString());
                   }
-
-                  // get days between last and first day
-                  // if (firstDay != null && lastDay != null) {
-
-                  // }
                 }
               }
             }
@@ -109,10 +108,6 @@ public class UploadScheduleReactor extends AbstractReactor {
 
       workbook.close();
       fis.close();
-      System.out.println("result dates:");
-      for (LocalDate date : result) {
-        System.out.println("  " + date);
-      }
     } catch (Exception e) {
       e.printStackTrace();
     }

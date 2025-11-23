@@ -1,9 +1,11 @@
-import { Button, Stack, Typography, Autocomplete, TextField } from "@mui/material";
+import { Button, Stack, Typography, Autocomplete, TextField, Container, IconButton, Tooltip } from "@mui/material";
 import { useRef, useState, useEffect } from "react";
 import { useLoadingPixel } from "@/hooks";
 import { useInsight } from "@semoss/sdk-react";
 import { Model, LLMResponse } from "./constants";
 import { Markdown } from "@/components";
+import { UploadBox } from "@/components/base/UploadBox";
+import { AutoAwesome } from "@mui/icons-material";
 
 
 export const HomePage = () => {
@@ -13,13 +15,10 @@ export const HomePage = () => {
 	const { actions, system } = useInsight();
 	const [daysOff, setDaysOff] = useState([]);
 	const [response, setResponse] = useState<string>('');
-	// Model Catalog and first model in dropdown
 	const [modelOptions, setModelOptions] = useState([]);
 	const [selectedModel, setSelectedModel] = useState<Model>({});	//const { notification } = useNotification();
-	const [helloUserResponse, isLoadingHelloUser] =
-		useLoadingPixel<string>("HelloUser()");
-
 	const [isLoading, setIsLoading] = useState(false);
+	const [isModelSelect, setIsModelSelect] = useState(false);
 
 	const uploadFiles = async (file): Promise<string> => {
 		const fileLocations: string[] = [];
@@ -59,8 +58,6 @@ export const HomePage = () => {
 		hiddenFileInput.current.click();
 	};
 
-	console.log("Selected Model: ", selectedModel);
-
 	const generateResponse = async (daysOffList: any[]) => {
 
 		const command = 'You are talking to a Parent about their child\'s schedule. Provide a summary of days off, and then go through each Month and say which days are off: ' + JSON.stringify(daysOffList);
@@ -99,65 +96,56 @@ export const HomePage = () => {
 	};
 
 	return (
-		<Stack spacing={2}>
-			<Typography variant="h4">Schedule Uploader</Typography>
-			<Typography fontStyle="italic">
-				{isLoadingHelloUser
-					? "Loading..."
-					: helloUserResponse}
-			</Typography>
-			<br />
-			<Stack alignItems={'flex-start'} spacing={2}>
-				<Autocomplete
-					disableClearable
-					options={modelOptions}
-					value={selectedModel}
-					getOptionLabel={(option: Model) => option.database_name}
-					onChange={(event, newModel) => setSelectedModel(newModel)}
-					renderInput={(params) => (
-						<TextField {...params} label="Model" />
-					)}
-					sx={{ width: 300 }}
-				/>
-				<input
-					type="file"
-					ref={hiddenFileInput}
-					onChange={(e) => setSelectedFile(e.target.files[0])}
-					style={{ display: 'none' }}
-				/>
-				<Button
-					variant="contained"
-					onClick={handleClick}
-				>
-					Upload Schedule
-				</Button>
-				{selectedFile && (<Typography variant="body1" mt={1}>
-					Selected File: {selectedFile.name}
-				</Typography>
-				)}
-				{selectedFile && (
+		<Container maxWidth="md">
+			<Stack spacing={2} sx={{ alignItems: "center", padding: 4 }}>
+				<Typography variant="h4">Schedule Uploader</Typography>
+				<UploadBox file={selectedFile} setFile={setSelectedFile} policyText={"Click to upload your child's schedule in .xlsx format."} />
+				<Stack alignItems={'center'} spacing={2} direction={'row'}>
 					<Button
-						variant="outlined"
+						variant="contained"
 						onClick={() => handleUpload()}
-						sx={{ mt: 2 }}
+						disabled={selectedFile == null || selectedModel.database_id == null}
 					>
-						Submit File
+						Upload Schedule
 					</Button>
-				)}
-				<Stack mt={2} spacing={1}>
-					<Typography variant="h6">Days Off:</Typography>
-					{/* {daysOff.map((day, index) => (
-							<p key={index}>
-								{day}
-							</p>
-						))} */}
+					<Tooltip title="Select Model">
+						<IconButton
+							onClick={() => setIsModelSelect(!isModelSelect)}
+							color={selectedModel ? "primary" : "default"}
+						>
+							<AutoAwesome />
+						</IconButton>
+					</Tooltip>
+					{isModelSelect && (
+						<Autocomplete
+							disableClearable
+							options={modelOptions}
+							value={selectedModel}
+							getOptionLabel={(option: Model) => option.database_name}
+							onChange={(event, newModel) => setSelectedModel(newModel)}
+							renderInput={(params) => (
+								<TextField {...params} label="Model" />
+							)}
+							sx={{ width: 300 }}
+						/>
+					)}
+				</Stack>
+				<Stack spacing={1} alignItems={'center'}>
 					{response && (
-						<Typography variant="body1" mt={1}>
-							<Markdown>{response}</Markdown>
-						</Typography>
+						<Stack>
+							<Typography variant="h6">Days Off:</Typography>
+							{/* {daysOff.map((day, index) => (
+								<p key={index}>
+									{day}
+								</p>
+							))} */}
+							<Typography variant="body1" mt={1}>
+								<Markdown>{response}</Markdown>
+							</Typography>
+						</Stack>
 					)}
 				</Stack>
 			</Stack>
-		</Stack>
+		</Container>
 	);
 };
