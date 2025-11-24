@@ -1,30 +1,31 @@
 import { Button, Stack, Typography, Autocomplete, TextField, Container, IconButton, Tooltip } from "@mui/material";
-import { useRef, useState, useEffect } from "react";
-import { useLoadingPixel } from "@/hooks";
-import { useInsight } from "@semoss/sdk-react";
+import { useState, useEffect } from "react";
+import { useInsight } from "@semoss/sdk/react";
 import { Model, LLMResponse } from "./constants";
 import { Markdown } from "@/components";
 import { UploadBox } from "@/components/base/UploadBox";
 import { AutoAwesome } from "@mui/icons-material";
+import { Insight } from "@semoss/sdk";
 
 
 export const HomePage = () => {
 
-	const hiddenFileInput = useRef(null);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	const { actions, system } = useInsight();
+	const { actions, isReady } = useInsight();
 	const [daysOff, setDaysOff] = useState([]);
 	const [response, setResponse] = useState<string>('');
 	const [modelOptions, setModelOptions] = useState([]);
-	const [selectedModel, setSelectedModel] = useState<Model>({});	//const { notification } = useNotification();
+	const [selectedModel, setSelectedModel] = useState<Model>({});	
+	//const { notification } = useNotification();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isModelSelect, setIsModelSelect] = useState(false);
+
 
 	const uploadFiles = async (file): Promise<string> => {
 		const fileLocations: string[] = [];
 		try {
 			const response = await actions.upload(file, '');
-			const fileLocation = `'${response[0].fileLocation.replace(/^\//, '',)}'`;
+			const fileLocation = `${response[0].fileLocation.replace(/^\//, '',)}`;
 			fileLocations.push(fileLocation);
 			return fileLocations.join(',');
 
@@ -54,9 +55,24 @@ export const HomePage = () => {
 		setIsLoading(false);
 	}, []);
 
-	const handleClick = () => {
-		hiddenFileInput.current.click();
-	};
+	const handleSubmit = async () => {
+        try {
+			const insight = new Insight();
+			const init = await insight.initialize();
+			if(init.tool) {
+				const { output } = await actions.runMCPTool(init.tool?.name, {
+                "FILE_PATH": await uploadFiles(selectedFile),
+            });
+            	console.log({ output });
+
+			} else {
+				handleUpload();
+			}
+           
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
 	const generateResponse = async (daysOffList: any[]) => {
 
@@ -103,7 +119,7 @@ export const HomePage = () => {
 				<Stack alignItems={'center'} spacing={2} direction={'row'}>
 					<Button
 						variant="contained"
-						onClick={() => handleUpload()}
+						onClick={() => handleSubmit()}
 						disabled={selectedFile == null || selectedModel.database_id == null}
 					>
 						Upload Schedule

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useInsight } from '@semoss/sdk-react';
+import { useInsight } from '@semoss/sdk/react';
 
 interface PixelState<D> {
     /** Status of the pixel call */

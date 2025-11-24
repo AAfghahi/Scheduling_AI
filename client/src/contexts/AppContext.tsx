@@ -1,5 +1,5 @@
 import { getSystemConfig, runPixel as runPixelSemossSdk } from "@semoss/sdk";
-import { useInsight } from "@semoss/sdk-react";
+import { useInsight } from "@semoss/sdk/react";
 import {
 	createContext,
 	type Dispatch,
