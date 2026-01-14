@@ -1,47 +1,31 @@
-package prerna;
+package reactors;
 
 import prerna.reactor.AbstractReactor;
 import prerna.sablecc2.om.PixelDataType;
-import prerna.sablecc2.om.ReactorKeysEnum;
 import prerna.sablecc2.om.nounmeta.NounMetadata;
-import prerna.util.Constants;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.UUID;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-public class UploadScheduleReactor extends AbstractReactor {
+public class UploadParentScheduleReactor extends AbstractReactor {
 
-  public UploadScheduleReactor() {
+  public UploadParentScheduleReactor() {
     this.keysToGet = new String[] { "FILE_PATH" };
     this.keyRequired = new int[] { 1 };
   }
 
-  public static Map<String, String> holidayKeys = new HashMap<String, String>() {
-    {
-      put("F", "First Day of School");
-      put("L", "Last Day of School");
-      put("H", "Holidays");
-      put("SH", "Student Holiday");
-    }
-  };
+  public static List<String> holidayKeys = List.of("Firm Holiday", "PTO");
 
   @Override
   public NounMetadata execute() {
@@ -49,9 +33,6 @@ public class UploadScheduleReactor extends AbstractReactor {
     organizeKeys();
     String filePath = (String) this.keyValue.get("FILE_PATH");
     List<String> result = new ArrayList<>();
-    LocalDate firstDay = null;
-    LocalDate lastDay = null;
-    List<String> summerVacation = new ArrayList<>();
 
     try {
       String absolutePath = this.insight.getAbsoluteInsightFolderPath(filePath);
@@ -82,23 +63,10 @@ public class UploadScheduleReactor extends AbstractReactor {
 
                 if (nextRowCell != null &&
                     nextRowCell.getCellType() == CellType.STRING &&
-                    holidayKeys.containsKey(nextRowCell.getStringCellValue().trim())) {
-
-                  if (nextRowCell.getStringCellValue().trim().equals("L")) {
-                    lastDay = dateCell.getDateCellValue().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate();
-                    result.add("Last Day of School: " + lastDay.toString());
-                  } else if (nextRowCell.getStringCellValue().trim().equals("F")) {
-                    firstDay = dateCell.getDateCellValue().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate();
-                    result.add("First Day of School: " + firstDay.toString());
-                  } else {
-                    result.add(dateCell.getDateCellValue().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate().toString());
-                  }
+                    holidayKeys.contains(nextRowCell.getStringCellValue().trim())) {
+                  result.add(dateCell.getDateCellValue().toInstant()
+                      .atZone(java.time.ZoneId.systemDefault())
+                      .toLocalDate().toString());
                 }
               }
             }

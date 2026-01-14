@@ -1,0 +1,64 @@
+{
+    "_meta": {"last_modified_date": "2025-11-23"},
+    "tools": [
+        {
+            "inputSchema": {
+                "type": "object",
+                "title": "UploadParentSchedule_Arguments",
+                "properties": {
+                    "FILE_PATH": {
+                        "description": "Excel file to be parsed",
+                        "title": "FILE_PATH",
+                        "type": "string"
+                    }
+                },
+                "required": []
+            },
+            "name": "UploadParentSchedule",
+            "description": "This is used to parse parent's schedule to identify days off based off work calendar",
+            "_meta": {"SMSS_MCP_EXECUTION": "auto"},
+            "title": "Upload Parent Schedule"
+        },
+        {
+            "inputSchema": {
+                "type": "object",
+                "title": "UploadChildSchedule_Arguments",
+                "properties": {
+                    "FILE_PATH": {
+                        "description": "Excel file to be parsed",
+                        "title": "FILE_PATH",
+                        "type": "string"
+                    }
+                },
+                "required": []
+            },
+            "name": "UploadChildSchedule",
+            "description": "Parse child's schedule to identify days off based off school calendar",
+            "_meta": {"SMSS_MCP_EXECUTION": "auto"},
+            "title": "Upload Child Schedule"
+        },
+        {
+            "inputSchema": {
+                "type": "object",
+                "title": "CompareDaysOff_Arguments",
+                "properties": {
+                    "PARENT_DAYS_OFF": {
+                        "description": "List of calendar days off for parent",
+                        "title": "PARENT_DAYS_OFF",
+                        "type": "string"
+                    },
+                    "CHILD_DAYS_OFF": {
+                        "description": "List of calendar days off for child",
+                        "title": "CHILD_DAYS_OFF",
+                        "type": "string"
+                    }
+                },
+                "required": ["PARENT_DAYS_OFF", "CHILD_DAYS_OFF"]
+            },
+            "name": "CompareDaysOff",
+            "description": "Compare list of parent's days off with list of child's days off to find matches when asked to identify overlapping days off",
+            "_meta": {"SMSS_MCP_EXECUTION": "auto"},
+            "title": "Compare Days Off"
+        }
+    ]
+}
